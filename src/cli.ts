@@ -18,13 +18,16 @@ import { TestWatcher } from './watcher/testWatcher.js';
 import { DashboardServer } from './server/dashboardServer.js';
 import { McpServer } from './mcp/mcpServer.js';
 import { ConfigManager } from './config/configManager.js';
+import { HealthDoctor } from './doctor/healthDoctor.js';
+import { TestOptimizer } from './optimizer/testOptimizer.js';
+import { BadgeGenerator } from './badges/badgeGenerator.js';
 
 const program = new Command();
 
 program
   .name('autoheal')
-  .description('Autonomous Testing & Regression Agent (Playwright, Cypress, Testing Library)')
-  .version('4.0.0');
+  .description('Enterprise Autonomous Testing & Regression Agent (Playwright, Cypress, Testing Library)')
+  .version('5.0.0');
 
 program
   .command('run')
@@ -33,7 +36,7 @@ program
   .option('--no-pr', 'Do not create git branch and PR after healing')
   .option('--report <path>', 'Custom path for the HTML report', 'autoheal-report.html')
   .action(async (options) => {
-    console.log(chalk.bold.blue('🛡️  [AutoHeal Agent v4.0 Enterprise] Avvio suite di test...'));
+    console.log(chalk.bold.blue('🛡️  [AutoHeal Agent v5.0 Ultimate] Avvio suite di test...'));
     const runner = new TestRunner();
     const cache = new HealingCache();
     const result = await runner.runPlaywright(options.file);
@@ -163,6 +166,60 @@ program
       const reportPath = HtmlReporter.generateReport(records, options.report);
       console.log(chalk.bold.magenta(`\n📊 Report HTML generato: ${reportPath}`));
     }
+  });
+
+program
+  .command('doctor')
+  .description('Esegue un checkup completo dell\'ambiente (Playwright, Git, Node, Cache)')
+  .action(() => {
+    console.log(chalk.bold.blue('🩺 [AutoHeal Doctor] Diagnosi dell\'ambiente in corso...\n'));
+    const checks = HealthDoctor.diagnose();
+    let allOk = true;
+
+    for (const c of checks) {
+      const symbol = c.passed ? chalk.green('✓') : chalk.red('✗');
+      console.log(`${symbol} ${chalk.bold(c.name)}: ${c.message}`);
+      if (!c.passed && c.remedy) {
+        allOk = false;
+        console.log(chalk.yellow(`   💡 Rimedio: ${c.remedy}`));
+      }
+    }
+
+    if (allOk) {
+      console.log(chalk.bold.green('\n🎉 Tutti i controlli sono superati! Il sistema è configurato in modo ottimale.'));
+    } else {
+      console.log(chalk.bold.yellow('\n⚠️ Alcuni componenti richiedono attenzione.'));
+    }
+  });
+
+program
+  .command('optimize [dir]')
+  .description('Analizza la suite per individuare test ridondanti e stimare il tempo di CI risparmiato')
+  .action((dir) => {
+    console.log(chalk.bold.blue('⚡ [AutoHeal Optimizer] Scansione dei test per deduplicazione...\n'));
+    const insights = TestOptimizer.analyzeDirectory(dir ? path.resolve(process.cwd(), dir) : process.cwd());
+    let totalSaved = 0;
+
+    for (const ins of insights) {
+      console.log(chalk.cyan(`📄 File: ${ins.file}`));
+      console.log(`   Ridondanze: ${ins.duplicateStepsCount}`);
+      console.log(`   Tempo stimabile risparmiato: ~${ins.estimatedTimeSavedMs}ms`);
+      for (const s of ins.suggestions) {
+        console.log(chalk.gray(`   - ${s}`));
+      }
+      totalSaved += ins.estimatedTimeSavedMs;
+      console.log('');
+    }
+
+    console.log(chalk.bold.green(`🚀 Potenziale risparmio totale in CI: ~${totalSaved}ms`));
+  });
+
+program
+  .command('badges')
+  .description('Rigenera i badge SVG ufficiali per la documentazione e il README di GitHub')
+  .action(() => {
+    BadgeGenerator.generateBadges();
+    console.log(chalk.green('✅ Badge SVG generati con successo in assets/badges/!'));
   });
 
 program
