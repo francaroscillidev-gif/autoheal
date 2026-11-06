@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Store Checkout</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; max-width: 600px; margin: auto; }
+    .btn-primary-2026 { background: #2563eb; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; }
+    #confirmation { display: none; margin-top: 1rem; color: green; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Checkout Carrello</h1>
+  <p>Riepilogo ordine: Prodotto A, Totale: €49.00</p>
+
+  <form id="checkout-form" onsubmit="event.preventDefault(); document.getElementById('confirmation').style.display='block';">
+    <label for="address">Indirizzo di spedizione:</label><br>
+    <input type="text" id="address" placeholder="Via Roma 10" required><br><br>
+
+    <!-- ATTENZIONE: La classe originale '.old-btn-submit' è stata rimossa durante il redesign UI -->
+    <!-- Ora il bottone usa le moderne best practice con data-testid e accessible name -->
+    <button type="submit" data-testid="checkout-submit" class="btn-primary-2026" aria-label="Paga Ora">
+      Paga Ora
+    </button>
+  </form>
+
+  <div id="confirmation">Ordine Confermato con Successo!</div>
+</body>
+</html>
