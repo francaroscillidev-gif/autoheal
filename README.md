@@ -128,5 +128,5 @@ jobs:
 
 ## 📄 Licenza
 
-Rilasciato sotto licenza MIT.
+Rilasciato sotto licenza Apache 2.0. Consulta il file [LICENSE](file:///Users/musica/Desktop/antigravity%20proj/ai%20tools/autoheal/LICENSE) per i dettagli.
 

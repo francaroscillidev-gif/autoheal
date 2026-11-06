@@ -25,7 +25,7 @@
     "type": "git",
     "url": "https://github.com/francaroscillidev-gif/autoheal.git"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "description": "Autonomous Testing & Regression Agent (Self-Healing Tests for Playwright)",
   "dependencies": {
     "@playwright/test": "^1.50.0",
