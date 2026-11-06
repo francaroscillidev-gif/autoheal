@@ -95,6 +95,17 @@ npx autoheal badges
 
 ---
 
+## 📬 Contact, Support & Commercial Inquiries
+
+If you have questions, feedback, enterprise integration requests, or custom agent governance needs, feel free to reach out directly:
+
+- **Lead Developer & Maintainer:** Franca Roscilli
+- **Email:** [francaroscillidev@gmail.com](mailto:francaroscillidev@gmail.com)
+- **GitHub:** [@francaroscillidev-gif](https://github.com/francaroscillidev-gif)
+- **Bug Reports & Feature Requests:** [Open an issue on GitHub](https://github.com/francaroscillidev-gif/autoheal/issues)
+
+---
+
 ## 📄 Licenza
 
 Rilasciato sotto licenza Apache 2.0. Consulta il file [LICENSE](LICENSE) per i dettagli.
