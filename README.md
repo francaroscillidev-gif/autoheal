@@ -1,7 +1,7 @@
-# 🛡️ AutoHeal Agent v2.0
+# 🛡️ AutoHeal Agent v3.0
 
-> **Autonomous Testing & Regression Agent (Self-Healing Tests for Playwright, Cypress, Testing Library)**
-> Ripara automaticamente test E2E e unitari rotti, analizza il DOM semantico, usa Computer Vision multimodale, stabilizza test flaky e apre Pull Request automatiche.
+> **Enterprise Autonomous Testing & Regression Agent (Self-Healing Tests for Playwright, Cypress, Testing Library)**
+> Ripara automaticamente test E2E e unitari rotti, memorizza le soluzioni in cache a 0ms, usa SafeGuard contro i falsi positivi, supporta il Live TDD Watcher e crea Batch Pull Request raggruppate.
 
 ---
 
@@ -13,22 +13,22 @@
 
 ---
 
-## 🚀 Nuove Funzionalità di AutoHeal v2.0
+## 🚀 Novità Principali di AutoHeal v3.0
 
-1. **Self-Healing AST Chirurgico (`autoheal run`)**:
-   - Sostituisce i locator rotti con le best practice semantiche (`getByRole`, `getByTestId`, `getByPlaceholder`).
-2. **Interactive HTML Dashboard (`autoheal-report.html`)**:
-   - Resoconto visivo con tasso di riparazione %, diff colorato prima/dopo e spiegazione AI.
-3. **Generatore di Test Zero-to-One (`autoheal generate <url/file>`)**:
-   - Genera suite di test Playwright pronte all'uso analizzando la struttura della pagina.
-4. **Flaky Test Eliminator & Network Stabilizer (`autoheal stabilize <file>`)**:
-   - Rileva ed elimina race condition, chiamate API asincrone instabili e genera stub di rete (`page.route`).
-5. **Multimodal Vision Healer (`autoheal vision <screenshot>`)**:
-   - Analizza visivamente la UI tramite Computer Vision / Gemini Vision AI se il DOM è mutato radicalmente.
-6. **Supporto Cross-Framework**:
-   - Playwright, Cypress (`cy.get` ➔ `cy.findByRole`), e React Testing Library (`screen.getByRole`).
-7. **GitHub Action Bot Integration (`src/git/botCommenter.ts`)**:
-   - Pubblica commenti interattivi nelle Pull Request con il report e il comando `/autoheal apply`.
+1. **⚡ Persistent Memory Cache (`.autoheal-cache.json`)**:
+   - Una volta che un selettore viene riparato, la soluzione viene memorizzata in locale. Le esecuzioni successive applicano la fix in **0 millisecondi** a **$0 token** (`⚡ [Cache Hit]`).
+2. **🛡️ SafeGuard Mode (True Bug Detector)**:
+   - Distingue automaticamente i veri bug (errori HTTP 5xx del backend, eccezioni JavaScript non gestite o crash React) dai semplici cambi di selettore. Se è un vero bug dell'applicazione, **NON** altera il test e allerta lo sviluppatore.
+3. **👀 Live TDD Watcher (`autoheal watch`)**:
+   - Monitora i file dell'applicazione mentre sviluppi: se modifichi un componente o una form, ri-esegue e ripara automaticamente i test in background in tempo reale.
+4. **📦 Grouped Batch Pull Request (`BatchPrGenerator`)**:
+   - Raggruppa tutti i test riparati della suite in un'unica Pull Request ordinata con changelog e tabella comparativa.
+5. **👁️ Multimodal Vision AI (`autoheal vision <screenshot>`)**:
+   - Riconosce visivamente bottoni ed elementi spostati tramite Computer Vision e Gemini Vision se il DOM è cambiato radicalmente.
+6. **🧪 Test Suite Generator Zero-to-One (`autoheal generate <url/file>`)**:
+   - Genera da zero suite di test Playwright resilienti con selettori raccomandati (`getByRole`, `getByTestId`).
+7. **🌐 Supporto Cross-Framework**:
+   - Playwright, Cypress e React Testing Library.
 
 ---
 
@@ -38,31 +38,37 @@
 flowchart TD
     A["Esecuzione Test (Playwright / Cypress)"] --> B{"Test Fallito?"}
     B -- No --> C["✅ Build Verde"]
-    B -- Sì --> D["Playwright JSON Reporter & DOM Snapshot"]
-    D --> E["DOM Reducer (Cheerio: -90% token/rumore)"]
-    E --> F["AI Healer Engine + Vision AI"]
-    F --> G["AST Patcher (ts-morph chirurgico)"]
-    G --> H["Network Stabilizer (anti-flakiness)"]
-    H --> I["Re-run Test di Verifica"]
-    I -- Passato --> J["📊 Report HTML + Git PR / Bot Comment"]
+    B -- Sì --> D{"SafeGuard: È un Vero Bug?"}
+    D -- Sì: 500 / Crash --> E["🚨 Allerta Sviluppatore (Test preservato)"]
+    D -- No: Selettore rotto --> F{"Presente in Cache Locale?"}
+    F -- Sì --> G["⚡ Instant Patch (0ms, $0 token)"]
+    F -- No --> H["AI Healer + DOM Reducer + Vision AI"]
+    H --> I["Salva in .autoheal-cache.json"]
+    I --> G
+    G --> J["AST Patcher (ts-morph chirurgico)"]
+    J --> K["Re-run Test di Verifica"]
+    K -- Passato --> L["📊 Report HTML + Batch Git PR"]
 ```
 
 ---
 
-## ⚡ Comandi CLI
+## ⚡ Comandi CLI Principali
 
 ```bash
-# 1. Esegui la suite con auto-healing
+# 1. Esegui la suite con auto-healing, cache e report HTML
 npx autoheal run
 
-# 2. Genera un nuovo test da zero analizzando un file HTML o URL
+# 2. Avvia la modalità Live Watcher durante lo sviluppo
+npx autoheal watch
+
+# 3. Genera uno script di test da zero analizzando una pagina o URL
 npx autoheal generate demo/app.html --output demo/auto-generated.spec.ts
 
-# 3. Stabilizza un test flaky da race-conditions asincrone
+# 4. Stabilizza test flaky e race conditions di rete
 npx autoheal stabilize demo/checkout.spec.ts
 
-# 4. Analisi visiva di uno screenshot con Vision AI
-npx autoheal vision demo/error-screenshot.png --desc "Bottone Paga Ora"
+# 5. Analisi visiva di uno screenshot con Vision AI
+npx autoheal vision demo/error-screenshot.png --desc "Pulsante Paga Ora"
 ```
 
 ---
