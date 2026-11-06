@@ -15,13 +15,16 @@ import { NetworkStabilizer } from './stabilizer/networkStabilizer.js';
 import { HealingCache } from './cache/healingCache.js';
 import { SafeGuard } from './guard/safeGuard.js';
 import { TestWatcher } from './watcher/testWatcher.js';
+import { DashboardServer } from './server/dashboardServer.js';
+import { McpServer } from './mcp/mcpServer.js';
+import { ConfigManager } from './config/configManager.js';
 
 const program = new Command();
 
 program
   .name('autoheal')
   .description('Autonomous Testing & Regression Agent (Playwright, Cypress, Testing Library)')
-  .version('3.0.0');
+  .version('4.0.0');
 
 program
   .command('run')
@@ -30,7 +33,7 @@ program
   .option('--no-pr', 'Do not create git branch and PR after healing')
   .option('--report <path>', 'Custom path for the HTML report', 'autoheal-report.html')
   .action(async (options) => {
-    console.log(chalk.bold.blue('🛡️  [AutoHeal Agent v3.0] Avvio suite di test...'));
+    console.log(chalk.bold.blue('🛡️  [AutoHeal Agent v4.0 Enterprise] Avvio suite di test...'));
     const runner = new TestRunner();
     const cache = new HealingCache();
     const result = await runner.runPlaywright(options.file);
@@ -160,6 +163,31 @@ program
       const reportPath = HtmlReporter.generateReport(records, options.report);
       console.log(chalk.bold.magenta(`\n📊 Report HTML generato: ${reportPath}`));
     }
+  });
+
+program
+  .command('serve')
+  .description('Avvia la Web Dashboard interattiva in tempo reale')
+  .option('-p, --port <port>', 'Porta server HTTP', '4321')
+  .action((options) => {
+    const server = new DashboardServer(parseInt(options.port, 10));
+    server.start();
+  });
+
+program
+  .command('mcp')
+  .description('Avvia il Model Context Protocol (MCP) Server su stdio per client AI')
+  .action(() => {
+    const mcp = new McpServer();
+    mcp.startStdio();
+  });
+
+program
+  .command('init')
+  .description('Inizializza il file di configurazione autoheal.config.json')
+  .action(() => {
+    ConfigManager.saveDefaultConfig();
+    console.log(chalk.green('✅ File autoheal.config.json creato con successo!'));
   });
 
 program

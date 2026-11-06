@@ -1,0 +1,9 @@
+{
+  "confidenceThreshold": 0.85,
+  "framework": "playwright",
+  "autoCommit": true,
+  "createPr": true,
+  "openReport": false,
+  "cacheEnabled": true,
+  "ignoredLocators": []
+}
