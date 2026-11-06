@@ -59,22 +59,30 @@ autoheal/
 
 ## ⚡ Come Provarlo (Demo End-to-End)
 
-1. Entra nella cartella:
-   ```bash
-   cd autoheal
-   ```
+### 1. Auto-Healing di Test Rotti
+Esegui la suite con auto-healing integrato:
+```bash
+npm run autoheal:demo
+```
+- L'agente analizza il fallimento, individua l'intento dell'utente.
+- Applica la patch AST al codice sorgente.
+- Ri-esegue il test che passa in **VERDE**.
+- Genera automaticamente un report HTML visivo in `autoheal-report.html`.
 
-2. Esegui la suite con auto-healing integrato:
-   ```bash
-   npm run autoheal:demo
-   ```
+### 2. Generazione Automatica di Test (Zero-to-One)
+Genera una suite di test Playwright a partire da un file HTML o da un URL:
+```bash
+npx autoheal generate demo/app.html --output demo/auto-generated.spec.ts
+```
+Playwright eseguirà direttamente il nuovo test con selettori resilienti (`getByRole`, `getByTestId`, `getByPlaceholder`).
 
-3. **Cosa succede:**
-   - Il test fallisce perché cercava `page.locator('.old-btn-submit')` (rimosso nel redesign).
-   - L'agente analizza il DOM, riconosce l'intento dell'azione sul bottone *"Paga Ora"*.
-   - Riconosce l'elemento semantico `data-testid="checkout-submit"`.
-   - Modifica `demo/checkout.spec.ts` sostituendolo con `page.getByTestId('checkout-submit')`.
-   - Ri-esegue il test che diventa **VERDE**.
+---
+
+## 📊 Dashboard & Report HTML
+Dopo ogni operazione di auto-healing, viene creata la dashboard interattiva `autoheal-report.html` con:
+- Percentuale di successo del self-healing
+- Diff visivo colorato del codice prima/dopo
+- Motivazione e confidenza del modello AI
 
 ---
 

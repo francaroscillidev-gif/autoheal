@@ -13,7 +13,7 @@ export interface HealingProposal {
   confidence: number;
   reasoning: string;
   oldLocator: string;
-  suggestedLocatorCode: string; // e.g. "getByRole('button', { name: 'Invia Ordine' })"
+  suggestedLocatorCode: string;
   targetElement?: InteractiveElement;
 }
 
@@ -28,33 +28,34 @@ export class HealingEngine {
    * Determina il nuovo locator confrontando l'intento del test e gli elementi del DOM.
    */
   public async heal(context: HealingContext): Promise<HealingProposal> {
-    // Se è disponibile una chiave API LLM, proviamo prima la chiamata LLM
     if (this.apiKey) {
       try {
         const llmResult = await this.queryLlm(context);
         if (llmResult) return llmResult;
       } catch (err) {
-        console.warn(`[AutoHeal AI] LLM query failed, falling back to local semantic matcher:`, err);
+        console.warn(`[AutoHeal AI] LLM fallback su local matcher:`, err);
       }
     }
 
-    // Semantic Intent Matching locale (deterministico & veloce)
     return this.localSemanticMatch(context);
   }
 
   /**
-   * Algoritmo euristico locale: analizza il testo, il nome dell'azione e i selettori affini
+   * Algoritmo semantico locale avanzato: gestisce bottoni, input, link, dropdown e asserzioni
    */
   private localSemanticMatch(context: HealingContext): HealingProposal {
-    const { brokenLocator, elements, failedTestCode, errorMessage } = context;
+    const { brokenLocator, elements, failedTestCode } = context;
 
-    // Estraiamo parole chiave dall'intento originale (es. da '.btn-submit', 'button[name="checkout"]', o dal testo del locator)
     const normalizedOld = brokenLocator.toLowerCase().replace(/[^a-z0-9]/g, ' ');
-    const keywords = normalizedOld.split(/\s+/).filter(w => w.length > 2 && !['button', 'click', 'locator', 'page', 'waitfor'].includes(w));
+    const keywords = normalizedOld.split(/\s+/).filter(w => 
+      w.length > 2 && !['button', 'click', 'locator', 'page', 'waitfor', 'input', 'select', 'fill'].includes(w)
+    );
 
     let bestElement: InteractiveElement | null = null;
     let highestScore = 0;
-    let reasoning = '';
+
+    const isFillAction = failedTestCode.includes('.fill(');
+    const isClickAction = failedTestCode.includes('.click(');
 
     for (const el of elements) {
       let score = 0;
@@ -62,19 +63,26 @@ export class HealingEngine {
       const elTestId = (el.testId || '').toLowerCase();
       const elAria = (el.ariaLabel || '').toLowerCase();
       const elId = (el.id || '').toLowerCase();
+      const elPlaceholder = (el.placeholder || '').toLowerCase();
+      const elName = (el.name || '').toLowerCase();
 
-      // 1. Corrispondenza Test ID (priorità massima)
+      // Corrispondenza semantica pesata
       for (const kw of keywords) {
-        if (elTestId.includes(kw)) score += 10;
-        if (elAria.includes(kw)) score += 8;
-        if (elText.includes(kw)) score += 7;
-        if (elId.includes(kw)) score += 5;
+        if (elTestId.includes(kw)) score += 12;
+        if (elAria.includes(kw)) score += 10;
+        if (elText.includes(kw)) score += 8;
+        if (elPlaceholder.includes(kw)) score += 8;
+        if (elName.includes(kw)) score += 7;
+        if (elId.includes(kw)) score += 6;
         if (el.classes?.some(c => c.toLowerCase().includes(kw))) score += 4;
       }
 
-      // Bonus per corrispondenza di ruolo (se il vecchio conteneva 'button' o l'azione è un click)
-      if (failedTestCode.includes('.click(') && (el.tag === 'button' || el.role === 'button')) {
+      // Bonus per affinità d'azione
+      if (isClickAction && (el.tag === 'button' || el.role === 'button' || el.tag === 'a')) {
         score += 3;
+      }
+      if (isFillAction && (el.tag === 'input' || el.tag === 'textarea')) {
+        score += 4;
       }
 
       if (score > highestScore) {
@@ -85,10 +93,10 @@ export class HealingEngine {
 
     if (bestElement && highestScore >= 5) {
       const suggested = bestElement.selectorHints[0] || `locator('${bestElement.tag}')`;
-      reasoning = `Matched intent with ${highestScore} confidence based on text="${bestElement.text}" and testId="${bestElement.testId || 'none'}". Replaced fragile locator with resilient Playwright query.`;
+      const reasoning = `Intent matched con confidenza elevata (${highestScore} pts) su <${bestElement.tag}> [text="${bestElement.text || ''}", testId="${bestElement.testId || 'none'}", aria="${bestElement.ariaLabel || 'none'}"]. Sostituito il selettore fragile con Playwright resilient query.`;
 
       return {
-        confidence: Math.min(highestScore / 15, 0.98),
+        confidence: Math.min(highestScore / 15, 0.99),
         reasoning,
         oldLocator: brokenLocator,
         suggestedLocatorCode: suggested,
@@ -96,33 +104,34 @@ export class HealingEngine {
       };
     }
 
-    // Se non abbiamo trovato keyword specifiche ma c'è un solo bottone o elemento interattivo coerente
-    if (elements.length === 1 && elements[0].selectorHints.length > 0) {
-      const singleEl = elements[0];
+    // Se c'è un solo elemento interattivo compatibile con l'azione
+    const compatibleElements = elements.filter(el => 
+      isClickAction ? (el.tag === 'button' || el.role === 'button' || el.tag === 'a') : (el.tag === 'input')
+    );
+
+    if (compatibleElements.length === 1 && compatibleElements[0].selectorHints.length > 0) {
+      const singleEl = compatibleElements[0];
       return {
-        confidence: 0.75,
-        reasoning: 'Single actionable target found in modified DOM region.',
+        confidence: 0.80,
+        reasoning: `Unico target interattivo compatibile presente nell'area attiva (${singleEl.tag}).`,
         oldLocator: brokenLocator,
         suggestedLocatorCode: singleEl.selectorHints[0],
         targetElement: singleEl
       };
     }
 
-    throw new Error(`Unable to determine intent for broken locator: ${brokenLocator}. No confident match found.`);
+    throw new Error(`Impossibile determinare con sicurezza l'intento per il selettore: ${brokenLocator}.`);
   }
 
-  /**
-   * Invocazione LLM (formattata per prompt strutturato)
-   */
   private async queryLlm(context: HealingContext): Promise<HealingProposal | null> {
     const formattedDom = formatElementsForPrompt(context.elements);
 
     const systemPrompt = `You are an autonomous test-repair agent for Playwright tests.
-Given a broken test line, the error message, and the simplified current DOM elements, your task is to identify the original intent and output a modernized, resilient Playwright locator (e.g. getByRole, getByTestId, getByLabel).
+Identify the original test intent and output a modernized, resilient Playwright locator (e.g. getByRole, getByTestId, getByLabel, getByPlaceholder).
 
-Output strictly valid JSON with this shape:
+Output strictly valid JSON:
 {
-  "reasoning": "Brief explanation of what changed in the DOM and why this is the correct target",
+  "reasoning": "Explanation",
   "confidence": 0.95,
   "suggestedLocatorCode": "getByRole('button', { name: 'Submit' })"
 }`;
@@ -138,7 +147,6 @@ Current Interactive Elements in DOM:
 ${formattedDom}
 `;
 
-    // Se c'è GEMINI_API_KEY, eseguiamo fetch verso Gemini API
     if (process.env.GEMINI_API_KEY) {
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
       const res = await fetch(endpoint, {

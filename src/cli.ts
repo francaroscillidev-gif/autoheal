@@ -8,19 +8,22 @@ import { extractInteractiveElements } from './dom/reducer.js';
 import { HealingEngine } from './ai/healer.js';
 import { AstPatcher } from './patcher/astPatcher.js';
 import { PrGenerator } from './git/prGenerator.js';
+import { HtmlReporter, HealedTestRecord } from './report/htmlReporter.js';
+import { TestGenerator } from './generator/testGenerator.js';
 
 const program = new Command();
 
 program
   .name('autoheal')
   .description('Autonomous Testing & Regression Agent for Playwright (Self-Healing Tests)')
-  .version('1.0.0');
+  .version('1.1.0');
 
 program
   .command('run')
-  .description('Run Playwright tests with autonomous self-healing')
+  .description('Run Playwright tests with autonomous self-healing and HTML report')
   .option('-f, --file <file>', 'Specific test file to run')
   .option('--no-pr', 'Do not create git branch and PR after healing')
+  .option('--report <path>', 'Custom path for the HTML report', 'autoheal-report.html')
   .action(async (options) => {
     console.log(chalk.bold.blue('🛡️  [AutoHeal Agent] Avvio suite di test...'));
     const runner = new TestRunner();
@@ -33,24 +36,22 @@ program
 
     console.log(chalk.bold.red(`❌ Rilevati ${result.failures.length || 1} test falliti. Avvio analisi di Self-Healing...`));
 
-    // Analizziamo il fallimento
+    const records: HealedTestRecord[] = [];
+
     for (const failure of result.failures) {
       console.log(chalk.cyan(`\n🔍 Analisi file: ${failure.filePath}:${failure.lineNumber}`));
       if (failure.brokenLocator) {
         console.log(chalk.yellow(`   Selettore rotto rilevato: "${failure.brokenLocator}"`));
       }
 
-      // Leggi il file di test originale
       const testCode = fs.readFileSync(failure.filePath, 'utf-8');
 
-      // Se il test ha salvato o generato uno snapshot DOM, leggiamolo; altrimenti cerchiamo un file HTML collegato
       let currentDom = '';
       const demoHtmlPath = path.resolve(process.cwd(), 'demo/app.html');
       if (fs.existsSync(demoHtmlPath)) {
         currentDom = fs.readFileSync(demoHtmlPath, 'utf-8');
       }
 
-      // Estrai gli elementi interattivi dal DOM ridotto
       const interactiveElements = extractInteractiveElements(currentDom);
       console.log(chalk.gray(`   Elementi interattivi analizzati nel DOM: ${interactiveElements.length}`));
 
@@ -70,7 +71,6 @@ program
         console.log(chalk.white(`   Spiegazione: ${proposal.reasoning}`));
         console.log(chalk.cyan(`   Nuovo selettore: ${chalk.bold(proposal.suggestedLocatorCode)}`));
 
-        // Applica la patch AST
         console.log(chalk.blue(`🔧 Applicazione patch AST sul file di test...`));
         const patcher = new AstPatcher();
         const patchResult = patcher.patchFile({
@@ -83,11 +83,23 @@ program
         if (patchResult.success) {
           console.log(chalk.green(`✅ File modificato con successo: ${patchResult.diffPreview}`));
 
-          // Ri-esegui il test per verifica
           console.log(chalk.blue(`🔄 Ri-esecuzione del test di verifica...`));
           const verifyResult = await runner.runPlaywright(failure.filePath);
 
-          if (verifyResult.passed) {
+          const isHealed = verifyResult.passed;
+          records.push({
+            testFile: path.basename(failure.filePath),
+            testTitle: failure.testTitle,
+            line: failure.lineNumber,
+            oldLocator: proposal.oldLocator,
+            newLocator: proposal.suggestedLocatorCode,
+            confidence: proposal.confidence,
+            reasoning: proposal.reasoning,
+            timestamp: new Date().toLocaleTimeString(),
+            status: isHealed ? 'healed' : 'failed'
+          });
+
+          if (isHealed) {
             console.log(chalk.bold.green(`🎉 Il test è VERDE dopo la riparazione automatica!`));
 
             if (options.pr !== false) {
@@ -100,14 +112,36 @@ program
               });
             }
           } else {
-            console.log(chalk.red(`⚠️ La patch non ha risolto completamente il fallimento. Il test continua a fallire.`));
+            console.log(chalk.red(`⚠️ La patch non ha risolto completamente il fallimento.`));
           }
-        } else {
-          console.log(chalk.red(`❌ Impossibile applicare la patch AST automaticamente.`));
         }
       } catch (err: any) {
         console.log(chalk.red(`❌ Errore durante l'healing: ${err.message}`));
       }
+    }
+
+    if (records.length > 0) {
+      const reportPath = HtmlReporter.generateReport(records, options.report);
+      console.log(chalk.bold.magenta(`\n📊 Report HTML generato: ${reportPath}`));
+    }
+  });
+
+program
+  .command('generate <source>')
+  .description('Genera automaticamente uno script di test Playwright dal DOM di un file HTML o URL')
+  .option('-o, --output <file>', 'Output test file path', 'generated.spec.ts')
+  .option('-t, --title <title>', 'Test title')
+  .action((source, options) => {
+    try {
+      console.log(chalk.bold.blue(`🧪 [AutoHeal Generator] Analisi di: ${source}...`));
+      const outPath = TestGenerator.generateSuite({
+        source,
+        outputFile: options.output,
+        testTitle: options.title
+      });
+      console.log(chalk.bold.green(`✅ Test suite generata con successo in: ${outPath}`));
+    } catch (err: any) {
+      console.log(chalk.red(`❌ Errore nella generazione del test: ${err.message}`));
     }
   });
 
