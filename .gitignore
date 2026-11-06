@@ -6,3 +6,8 @@ playwright-report.json
 .env.*
 *.log
 .DS_Store
+
+# Aggiunti automaticamente da push-to-github
+.env.local
+build
+.push-to-github
