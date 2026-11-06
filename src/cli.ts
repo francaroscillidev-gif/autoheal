@@ -10,22 +10,25 @@ import { AstPatcher } from './patcher/astPatcher.js';
 import { PrGenerator } from './git/prGenerator.js';
 import { HtmlReporter, HealedTestRecord } from './report/htmlReporter.js';
 import { TestGenerator } from './generator/testGenerator.js';
+import { VisionHealer } from './ai/visionHealer.js';
+import { NetworkStabilizer } from './stabilizer/networkStabilizer.js';
+import { BotCommenter } from './git/botCommenter.js';
 
 const program = new Command();
 
 program
   .name('autoheal')
-  .description('Autonomous Testing & Regression Agent for Playwright (Self-Healing Tests)')
-  .version('1.1.0');
+  .description('Autonomous Testing & Regression Agent (Playwright, Cypress, Testing Library)')
+  .version('2.0.0');
 
 program
   .command('run')
-  .description('Run Playwright tests with autonomous self-healing and HTML report')
+  .description('Run test suite with autonomous self-healing, HTML report, and PR auto-creation')
   .option('-f, --file <file>', 'Specific test file to run')
   .option('--no-pr', 'Do not create git branch and PR after healing')
   .option('--report <path>', 'Custom path for the HTML report', 'autoheal-report.html')
   .action(async (options) => {
-    console.log(chalk.bold.blue('🛡️  [AutoHeal Agent] Avvio suite di test...'));
+    console.log(chalk.bold.blue('🛡️  [AutoHeal Agent v2.0] Avvio suite di test...'));
     const runner = new TestRunner();
     const result = await runner.runPlaywright(options.file);
 
@@ -128,7 +131,7 @@ program
 
 program
   .command('generate <source>')
-  .description('Genera automaticamente uno script di test Playwright dal DOM di un file HTML o URL')
+  .description('Genera automaticamente una suite di test da un file HTML o URL')
   .option('-o, --output <file>', 'Output test file path', 'generated.spec.ts')
   .option('-t, --title <title>', 'Test title')
   .action((source, options) => {
@@ -142,6 +145,43 @@ program
       console.log(chalk.bold.green(`✅ Test suite generata con successo in: ${outPath}`));
     } catch (err: any) {
       console.log(chalk.red(`❌ Errore nella generazione del test: ${err.message}`));
+    }
+  });
+
+program
+  .command('stabilize <file>')
+  .description('Rileva e stabilizza test flaky eliminando race condition e problemi di rete')
+  .action((file) => {
+    try {
+      console.log(chalk.bold.blue(`🛡️  [AutoHeal Stabilizer] Stabilizzazione di ${file}...`));
+      const res = NetworkStabilizer.stabilizeTestFile(file);
+      if (res.modified) {
+        console.log(chalk.green(`✅ Applicate le seguenti stabilizzazioni:\n- ${res.stabilizationsApplied.join('\n- ')}`));
+      } else {
+        console.log(chalk.yellow(`ℹ️ Nessuna flakiness rilevata nel file.`));
+      }
+    } catch (err: any) {
+      console.log(chalk.red(`❌ Errore: ${err.message}`));
+    }
+  });
+
+program
+  .command('vision <screenshot>')
+  .description('Analisi visiva di uno screenshot di errore con Multimodal Vision AI')
+  .option('-d, --desc <description>', 'Descrizione dell\'elemento da trovare', 'Pulsante di checkout o azione primaria')
+  .action(async (screenshot, options) => {
+    try {
+      console.log(chalk.bold.blue(`👁️  [AutoHeal Vision AI] Analisi screenshot: ${screenshot}...`));
+      const vision = new VisionHealer();
+      const res = await vision.analyzeScreenshot({
+        screenshotPath: screenshot,
+        elementDescription: options.desc
+      });
+      console.log(chalk.green(`✅ Risultato Vision AI (Confidenza: ${(res.confidence * 100).toFixed(0)}%):`));
+      console.log(chalk.white(`   ${res.reasoning}`));
+      console.log(chalk.cyan(`   Azione consigliata: ${res.suggestedAction}`));
+    } catch (err: any) {
+      console.log(chalk.red(`❌ Errore: ${err.message}`));
     }
   });
 
