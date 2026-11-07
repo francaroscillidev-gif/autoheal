@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="logoBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="coreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="50%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="900" height="240" rx="24" fill="url(#logoBg)" stroke="#1e293b" stroke-width="2"/>
+
+  <!-- Left Icon Group -->
+  <g transform="translate(40, 20)">
+    <!-- Base Icon Container -->
+    <rect width="200" height="200" rx="44" fill="#0b0f19" stroke="#334155" stroke-width="2"/>
+    
+    <!-- Shield Outer -->
+    <path d="M100 28 C138 28 160 44 160 44 C160 100 138 144 100 170 C62 144 40 100 40 44 C40 44 62 28 100 28 Z" 
+          fill="none" 
+          stroke="url(#shieldGrad)" 
+          stroke-width="6" 
+          filter="url(#neonGlow)"/>
+
+    <!-- Shield Inner -->
+    <path d="M100 36 C132 36 150 50 150 50 C150 96 132 134 100 156 C68 134 50 96 50 50 C50 50 68 36 100 36 Z" 
+          fill="#131b2e"/>
+
+    <!-- Healing Bolt -->
+    <path d="M106 56 L72 104 L96 104 L88 148 L128 94 L104 94 L112 56 Z" 
+          fill="url(#coreGrad)" 
+          filter="url(#neonGlow)"/>
+
+    <!-- Checkmark -->
+    <path d="M74 108 L90 124 L126 80" 
+          fill="none" 
+          stroke="#10b981" 
+          stroke-width="6" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"
+          filter="url(#neonGlow)"/>
+  </g>
+
+  <!-- Typography Right Side -->
+  <g transform="translate(280, 50)">
+    <!-- Main Title -->
+    <text x="0" y="65" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="64" font-weight="800" fill="url(#textGrad)" letter-spacing="-1">
+      AutoHeal
+    </text>
+    <text x="270" y="65" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="28" font-weight="600" fill="#38bdf8" filter="url(#neonGlow)">
+      v6.0
+    </text>
+
+    <!-- Subtitle / Tagline -->
+    <text x="0" y="105" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="500" fill="#f8fafc">
+      Autonomous Testing &amp; Self-Healing Agent Ecosystem
+    </text>
+
+    <!-- Badges / Pill Tags -->
+    <g transform="translate(0, 125)">
+      <!-- Pill 1: Playwright & Cypress -->
+      <rect width="180" height="28" rx="6" fill="#1e293b" stroke="#334155"/>
+      <text x="90" y="18" font-family="sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">
+        Playwright &bull; Cypress &bull; RTL
+      </text>
+
+      <!-- Pill 2: 0ms Memory Cache -->
+      <rect x="195" width="130" height="28" rx="6" fill="rgba(2, 132, 199, 0.2)" stroke="#0284c7"/>
+      <text x="260" y="18" font-family="sans-serif" font-size="12" font-weight="600" fill="#38bdf8" text-anchor="middle">
+        ⚡ 0ms Cache
+      </text>
+
+      <!-- Pill 3: Polymorphic -->
+      <rect x="340" width="150" height="28" rx="6" fill="rgba(16, 185, 129, 0.2)" stroke="#10b981"/>
+      <text x="415" y="18" font-family="sans-serif" font-size="12" font-weight="600" fill="#34d399" text-anchor="middle">
+        🧬 Polymorphic .or()
+      </text>
+    </g>
+  </g>
+</svg>

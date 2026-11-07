@@ -1,4 +1,6 @@
-# 🛡️ AutoHeal Agent v6.0 Next-Gen
+<p align="center">
+  <img src="assets/logo.svg" alt="AutoHeal Agent Logo" width="100%" />
+</p>
 
 <p align="center">
   <img src="assets/badges/autoheal-rate.svg" alt="AutoHeal 100% Pass" />
