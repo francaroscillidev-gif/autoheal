@@ -1,4 +1,5 @@
 import { InteractiveElement, formatElementsForPrompt } from '../dom/reducer.js';
+import { GeneticSelectorSynthesizer } from '../engine/geneticSelector.js';
 
 export interface HealingContext {
   failedTestCode: string;
@@ -7,6 +8,7 @@ export interface HealingContext {
   brokenLocator: string;
   rawHtmlOrDom: string;
   elements: InteractiveElement[];
+  enablePolymorphic?: boolean;
 }
 
 export interface HealingProposal {
@@ -92,6 +94,17 @@ export class HealingEngine {
     }
 
     if (bestElement && highestScore >= 5) {
+      if (context.enablePolymorphic) {
+        const poly = GeneticSelectorSynthesizer.synthesize(bestElement);
+        return {
+          confidence: Math.min(highestScore / 15, 0.99),
+          reasoning: poly.explanation,
+          oldLocator: brokenLocator,
+          suggestedLocatorCode: poly.cascadingLocatorCode.replace(/^page\./, ''),
+          targetElement: bestElement
+        };
+      }
+
       const suggested = bestElement.selectorHints[0] || `locator('${bestElement.tag}')`;
       const reasoning = `Intent matched con confidenza elevata (${highestScore} pts) su <${bestElement.tag}> [text="${bestElement.text || ''}", testId="${bestElement.testId || 'none'}", aria="${bestElement.ariaLabel || 'none'}"]. Sostituito il selettore fragile con Playwright resilient query.`;
 

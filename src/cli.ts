@@ -21,22 +21,26 @@ import { ConfigManager } from './config/configManager.js';
 import { HealthDoctor } from './doctor/healthDoctor.js';
 import { TestOptimizer } from './optimizer/testOptimizer.js';
 import { BadgeGenerator } from './badges/badgeGenerator.js';
+import { JourneyExplorer } from './generator/journeyExplorer.js';
+import { TestBenchmarker } from './bench/testBenchmarker.js';
+import { SecretSanitizer } from './security/secretSanitizer.js';
 
 const program = new Command();
 
 program
   .name('autoheal')
-  .description('Enterprise Autonomous Testing & Regression Agent (Playwright, Cypress, Testing Library)')
-  .version('5.0.0');
+  .description('Next-Gen Autonomous Testing Ecosystem (Playwright, Cypress, Testing Library)')
+  .version('6.0.0');
 
 program
   .command('run')
   .description('Run test suite with autonomous self-healing, caching, safeguard and PR generation')
   .option('-f, --file <file>', 'Specific test file to run')
   .option('--no-pr', 'Do not create git branch and PR after healing')
+  .option('--polymorphic', 'Enable genetic multi-tier cascading locators with .or() failover')
   .option('--report <path>', 'Custom path for the HTML report', 'autoheal-report.html')
   .action(async (options) => {
-    console.log(chalk.bold.blue('🛡️  [AutoHeal Agent v5.0 Ultimate] Avvio suite di test...'));
+    console.log(chalk.bold.blue('🛡️  [AutoHeal Agent v6.0 Next-Gen] Avvio suite di test...'));
     const runner = new TestRunner();
     const cache = new HealingCache();
     const result = await runner.runPlaywright(options.file);
@@ -79,7 +83,7 @@ program
         confidence = cached.confidence;
         reasoning = `Recuperato da memoria cache locale (${cached.domainOrContext || 'precedente auto-healing'}).`;
       } else {
-        // 3. Analisi DOM e AI Healer
+        // 3. Analisi DOM e AI Healer con sanitizzazione
         const testCode = fs.readFileSync(failure.filePath, 'utf-8');
         let currentDom = '';
         const demoHtmlPath = path.resolve(process.cwd(), 'demo/app.html');
@@ -99,7 +103,8 @@ program
             errorMessage: failure.errorMessage,
             brokenLocator,
             rawHtmlOrDom: currentDom,
-            elements: interactiveElements
+            elements: interactiveElements,
+            enablePolymorphic: options.polymorphic
           });
 
           suggestedLocator = proposal.suggestedLocatorCode;
@@ -110,7 +115,7 @@ program
           console.log(chalk.white(`   Spiegazione: ${reasoning}`));
           console.log(chalk.cyan(`   Nuovo selettore: ${chalk.bold(suggestedLocator)}`));
 
-          // Memorizza nella cache per i prossimi run
+          // Memorizza nella cache
           cache.set(brokenLocator, suggestedLocator, confidence, path.basename(failure.filePath));
         } catch (err: any) {
           console.log(chalk.red(`❌ Errore durante l'healing: ${err.message}`));
@@ -161,10 +166,48 @@ program
       await BatchPrGenerator.createBatchPr(records);
     }
 
-    // 6. Generazione Report HTML
+    // 6. Generazione Report HTML sanitizzato
     if (records.length > 0) {
       const reportPath = HtmlReporter.generateReport(records, options.report);
       console.log(chalk.bold.magenta(`\n📊 Report HTML generato: ${reportPath}`));
+    }
+  });
+
+program
+  .command('journey <source>')
+  .description('Esplora la pagina e genera una suite a 3 scenari (Happy Path, Edge-Case, Negative)')
+  .option('-o, --output <file>', 'Output spec file', 'demo/journey-suite.spec.ts')
+  .action((source, options) => {
+    try {
+      console.log(chalk.bold.blue(`🧭 [AutoHeal Journey Explorer] Esplorazione profonda di: ${source}...`));
+      const res = JourneyExplorer.generateAdvancedJourney(source, options.output);
+      console.log(chalk.bold.green(`✅ Suite a ${res.scenariosCount} scenari generata con successo in: ${res.filePath}`));
+      for (const s of res.scenarios) {
+        console.log(chalk.cyan(`   ✓ ${s}`));
+      }
+    } catch (err: any) {
+      console.log(chalk.red(`❌ Errore durante l'esplorazione: ${err.message}`));
+    }
+  });
+
+program
+  .command('bench <file>')
+  .description('Esegue un benchmark di stabilità e calcola il Flakiness & Stability Score (0-100)')
+  .option('-r, --runs <number>', 'Numero di iterazioni', '3')
+  .action(async (file, options) => {
+    try {
+      console.log(chalk.bold.blue(`⏱️  [AutoHeal Benchmarker] Avvio benchmark di stabilità su ${file} (${options.runs} iterazioni)...`));
+      const metrics = await TestBenchmarker.benchmark(file, parseInt(options.runs, 10));
+      console.log(chalk.green(`\n📊 Risultati Benchmark per ${metrics.testFile}:`));
+      console.log(`   Tempo Medio: ${chalk.bold(metrics.avgDurationMs + 'ms')}`);
+      console.log(`   Stability Score: ${chalk.bold(metrics.stabilityScore + '/100')} (${metrics.status})`);
+      if (metrics.stabilityScore >= 85) {
+        console.log(chalk.green(`   ✨ Test altamente stabile e affidabile!`));
+      } else {
+        console.log(chalk.yellow(`   ⚠️ Possibili fluttuazioni di latenza. Considera "autoheal stabilize ${file}".`));
+      }
+    } catch (err: any) {
+      console.log(chalk.red(`❌ Errore benchmark: ${err.message}`));
     }
   });
 
