@@ -1,0 +1,48 @@
+name: 🐛 Bug Report
+description: Create a report to help us improve AutoHeal
+title: "[BUG]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: input
+    id: version
+    attributes:
+      label: AutoHeal Version
+      description: What version of AutoHeal are you running? (e.g. 6.0.0)
+      placeholder: "6.0.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: framework
+    attributes:
+      label: Test Framework
+      description: Which testing framework was being used?
+      options:
+        - Playwright
+        - Cypress
+        - React Testing Library
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of what the bug is and what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: error-log
+    attributes:
+      label: Error Log / Stack Trace
+      description: Paste the console output, stack trace, or Playwright error message.
+      render: shell
+  - type: textarea
+    id: dom-snippet
+    attributes:
+      label: DOM / Test Snippet
+      description: The HTML snippet or test code where the locator failed.
+      render: html

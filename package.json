@@ -2,7 +2,8 @@
   "name": "autoheal",
   "version": "6.0.0",
   "type": "module",
-  "main": "dist/cli.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "autoheal": "./dist/cli.js"
   },
